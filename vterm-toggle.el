@@ -321,12 +321,17 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
 (defun vterm-toggle--new (&optional buffer-name)
   "New vterm buffer with option name BUFFER-NAME."
   (let ((default-directory default-directory)
-        (buffer-name (or buffer-name vterm-buffer-name))
+        (buffer-name
+         (or buffer-name
+             (when (and (eq vterm-toggle-scope 'perspective)
+                        (vterm-toggle--perspective-p))
+               (format "*vterm* (%s)" (persp-current-name)))
+             vterm-buffer-name))
         project-root)
     (when (and vterm-toggle-project-root
                (eq vterm-toggle-scope 'project))
       (setq project-root (vterm-toggle--project-root))
-      (when project-root
+     (when project-root
         (setq default-directory project-root)))
     (if vterm-toggle-fullscreen-p
         (vterm buffer-name)
