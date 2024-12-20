@@ -51,11 +51,11 @@
 (defcustom vterm-toggle-show-hook nil
   "Hooks when swith to vterm buffer."
   :group 'vterm-toggle
-  :type 'symbolp)
+  :type 'symbol)
 (defcustom vterm-toggle-hide-hook nil
   "Hooks when hide vterm buffer."
   :group 'vterm-toggle
-  :type 'symbolp)
+  :type 'symbol)
 
 (defcustom vterm-toggle-fullscreen-p nil
   "Open vterm buffer fullscreen or not."
@@ -75,12 +75,13 @@
 
 (defcustom vterm-toggle-project-root t
   "Create a new vterm buffter at project root directory or not.
-it only work  when `vterm-toggle-scope' is `project'. "
+it only work  when `vterm-toggle-scope' is `project'."
   :group 'vterm-toggle
   :type 'boolean)
 
 (defcustom vterm-toggle-cd-auto-create-buffer nil
-  "If the prompt of recent vterm buffer is not available,
+  "Defines behaviour of the `vterm-toggle-cd'.
+If the prompt of recent vterm buffer is not available,
 `vterm-toggle-cd' would create a new vterm buffer."
   :group 'vterm-toggle
   :type 'boolean)
@@ -94,7 +95,7 @@ it only work  when `vterm-toggle-scope' is `project'. "
           (const :tag "Kill Window only" kill-window-only)))
 
 (defcustom vterm-toggle-hide-method 'delete-window
-  "How to hide the vterm buffer"
+  "How to hide the vterm buffer."
   :group 'vterm-toggle
   :type '(choice
           (const :tag "Toggle without closing the vterm window(focus other window)" nil)
@@ -191,7 +192,7 @@ Optional argument ARGS ."
         (bury-buffer)))))
 
 (defun vterm-toggle-tramp-get-method-parameter (method param)
-  "Return the method parameter PARAM.
+  "Return the METHOD parameter PARAM.
 If the `tramp-methods' entry does not exist, return NIL."
   (let ((entry (assoc param (assoc method tramp-methods))))
     (when entry (cadr entry))))
@@ -220,7 +221,7 @@ Optional argument ARGS optional args."
 Optional argument MAKE-CD whether insert a cd command."
   (interactive "P")
   (when (eq vterm-toggle-scope 'projectile)
-    (warn "the value of `vterm-toggle-scope' is 'projectile, please change it to 'project"))
+    (warn "The value of `vterm-toggle-scope' is 'projectile, please change it to 'project"))
   (let* ((shell-buffer (vterm-toggle--get-buffer
                         make-cd (not vterm-toggle-cd-auto-create-buffer)))
          (dir (expand-file-name default-directory))
@@ -293,7 +294,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
     (call-interactively #'vterm-toggle-cd-show)))
 
 (defun vterm-toggle--new(&optional buffer-name)
-  "New vterm buffer."
+  "New vterm buffer with option name BUFFER-NAME."
   (let ((default-directory default-directory)
         (buffer-name (or buffer-name vterm-buffer-name))
         project-root)
@@ -313,7 +314,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
 (defun vterm-toggle--get-buffer(&optional make-cd ignore-prompt-p)
   "Get vterm buffer.
 Optional argument MAKE-CD make cd or not.
-Optional argument ARGS optional args."
+Unknown argument IGNORE-PROMPT-P"
   (cond
    ((eq vterm-toggle-scope 'dedicated)
     (vterm-toggle--get-dedicated-buffer))
@@ -337,6 +338,7 @@ Optional argument ARGS optional args."
 
 
 (defun vterm-toggle--not-in-other-frame(frame buf)
+  "Checks if BUF in the given FRAME."
   (let ((win (get-buffer-window buf t)))
     (if win
         (eq frame (window-frame win))
@@ -345,7 +347,8 @@ Optional argument ARGS optional args."
 (defun vterm-toggle--recent-vterm-buffer(&optional make-cd ignore-prompt-p dir)
   "Get recent vterm buffer.
 Optional argument MAKE-CD make cd or not.
-Optional argument ARGS optional args."
+Unknown argument IGNORE-PROMPT-P
+Unknown argument DIR"
   (let ((shell-buffer)
         (curbuf (current-buffer))
         (curframe (window-frame))
@@ -380,12 +383,14 @@ Optional argument ARGS optional args."
     shell-buffer))
 
 (defun vterm-toggle--in-cmd-buffer-p()
+  "Returns t if cursor is in cmd buffer."
   (when (vterm-cursor-in-command-buffer-p)
     (or (eq (vterm--get-prompt-point) (vterm--get-cursor-point))
         (and (vterm--backward-char)
              (vterm--forward-char)))))
 
 (defun vterm-toggle--project-root()
+  "Returns path to the current project else nil."
   (require 'project)
   (let ((proj (project-current)))
     (when proj
