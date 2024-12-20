@@ -354,6 +354,8 @@ Unknown argument IGNORE-PROMPT-P"
             (vterm-toggle--recent-vterm-buffer
              make-cd ignore-prompt-p project-root)))
       buf))
+   ((eq vterm-toggle-scope 'perspective)
+    (vterm-toggle--vterm-buffer-name-for-perspective))
    (t
     (vterm-toggle--recent-vterm-buffer make-cd ignore-prompt-p))))
 
