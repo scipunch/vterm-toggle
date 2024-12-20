@@ -325,7 +325,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
          (or buffer-name
              (when (and (eq vterm-toggle-scope 'perspective)
                         (vterm-toggle--perspective-p))
-               (format "*vterm* (%s)" (persp-current-name)))
+               (vterm-toggle--vterm-buffer-name-for-perspective))
              vterm-buffer-name))
         project-root)
     (when (and vterm-toggle-project-root
@@ -515,6 +515,9 @@ If OFFSET is `non-nil', will goto next term buffer with OFFSET."
   "Returns curent perspective name if exists else nil."
   (require 'perspective nil 'no-error))
 
+(defun vterm-toggle--vterm-buffer-name-for-perspective ()
+  "Returns vterm buffer name for the current perpsective."
+  (format "*vterm* (%s)" (persp-current-name)))
 
 (provide 'vterm-toggle)
 
