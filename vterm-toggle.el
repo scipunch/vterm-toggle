@@ -40,7 +40,7 @@
 (require 'cl-lib)
 (require 'tramp)
 (require 'tramp-sh)
-(require 'perspective nil 'no-error)
+(require 'project nil 'noerror)
 
 (declare-function vterm "vterm")
 (declare-function vterm-cursor-in-command-buffer-p "vterm")
@@ -323,9 +323,9 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
   (let ((default-directory default-directory)
         (buffer-name
          (or buffer-name
-             (when (and (eq vterm-toggle-scope 'perspective)
-                        (vterm-toggle--perspective-p))
-               (vterm-toggle--vterm-buffer-name-for-perspective))
+             (when (and (eq vterm-toggle-scope 'project)
+                        (project-current))
+               (vterm-toggle--project-buffer-name))
              vterm-buffer-name))
         project-root)
     (when (and vterm-toggle-project-root
@@ -354,8 +354,6 @@ Unknown argument IGNORE-PROMPT-P"
             (vterm-toggle--recent-vterm-buffer
              make-cd ignore-prompt-p project-root)))
       buf))
-   ((eq vterm-toggle-scope 'perspective)
-    (vterm-toggle--vterm-buffer-name-for-perspective))
    (t
     (vterm-toggle--recent-vterm-buffer make-cd ignore-prompt-p))))
 
@@ -513,13 +511,9 @@ If OFFSET is `non-nil', will goto next term buffer with OFFSET."
   (interactive "P")
   (vterm-toggle--switch 'backward (or offset 1)))
 
-(defun vterm-toggle--perspective-p ()
-  "Returns curent perspective name if exists else nil."
-  (require 'perspective nil 'no-error))
-
-(defun vterm-toggle--vterm-buffer-name-for-perspective ()
+(defun vterm-toggle--project-buffer-name ()
   "Returns vterm buffer name for the current perpsective."
-  (format "*vterm* (%s)" (persp-current-name)))
+  (format "*vterm* (%s)" (project-name (project-current))))
 
 (provide 'vterm-toggle)
 
