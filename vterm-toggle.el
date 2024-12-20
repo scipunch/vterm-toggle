@@ -331,7 +331,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
     (when (and vterm-toggle-project-root
                (eq vterm-toggle-scope 'project))
       (setq project-root (vterm-toggle--project-root))
-     (when project-root
+      (when project-root
         (setq default-directory project-root)))
     (if vterm-toggle-fullscreen-p
         (vterm buffer-name)
@@ -339,7 +339,6 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
           (let ((display-buffer-alist nil))
             (vterm buffer-name))
         (vterm-other-window buffer-name)))))
-
 
 (defun vterm-toggle--get-buffer (&optional make-cd ignore-prompt-p)
   "Get vterm buffer.
@@ -483,18 +482,22 @@ If DIRECTION is `forward', switch to the next term.
 If DIRECTION `backward', switch to the previous term.
 Option OFFSET for skip OFFSET number term buffer."
   (if vterm-toggle--buffer-list
-      (let ((buffer-list-len (length vterm-toggle--buffer-list))
-            (index
-             (cl-position
-              (current-buffer) vterm-toggle--buffer-list)))
+      (let* ((buffer-list
+              (seq-filter
+               (lambda (buf)
+                 (string-match-p
+                  (regexp-quote (project-name (project-current)))
+                  (buffer-name buf)))
+               vterm-toggle--buffer-list))
+             (buffer-list-len (length buffer-list))
+             (index (cl-position (current-buffer) buffer-list)))
         (if index
             (let ((target-index
                    (if (eq direction 'forward)
                        (mod (+ index offset) buffer-list-len)
                      (mod (- index offset) buffer-list-len))))
-              (switch-to-buffer
-               (nth target-index vterm-toggle--buffer-list)))
-          (switch-to-buffer (car vterm-toggle--buffer-list))))
+              (switch-to-buffer (nth target-index buffer-list)))
+          (switch-to-buffer (car buffer-list))))
     (call-interactively 'vterm)))
 
 ;;;###autoload
