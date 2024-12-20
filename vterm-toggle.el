@@ -318,6 +318,12 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
         (vterm-send-return))
     (call-interactively #'vterm-toggle-cd-show)))
 
+;;;###autoload
+(defun vterm-toggle-new ()
+  "Creates new vterm buffer."
+  (interactive)
+  (vterm-toggle--new))
+
 (defun vterm-toggle--new (&optional buffer-name)
   "New vterm buffer with option name BUFFER-NAME."
   (let ((default-directory default-directory)
