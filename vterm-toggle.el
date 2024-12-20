@@ -40,6 +40,7 @@
 (require 'cl-lib)
 (require 'tramp)
 (require 'tramp-sh)
+(require 'perspective nil 'no-error)
 
 (declare-function vterm "vterm")
 (declare-function vterm-cursor-in-command-buffer-p "vterm")
