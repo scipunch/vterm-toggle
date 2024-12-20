@@ -46,7 +46,7 @@
 (declare-function vterm-send-string "vterm")
 (declare-function vterm-send-return "vterm")
 (declare-function vterm-other-window "vterm")
-(defvar vterm-buffer-name  "*vterm*")
+(defvar vterm-buffer-name "*vterm*")
 
 (defcustom vterm-toggle-show-hook nil
   "Hooks when swith to vterm buffer."
@@ -65,13 +65,16 @@
 (defcustom vterm-toggle-scope nil
   "`project' limit the scope only in the current project.
 `frame' limit the scope only not in other frame.
-`dedicated' use the dedicated vterm buffer."
+`dedicated' use the dedicated vterm buffer
+`perspective' limit the scope to the current perspective."
   :group 'vterm-toggle
-  :type '(radio
-          (const :tag "all" nil)
-          (const :tag "project" project)
-          (const :tag "frame" frame)
-          (const :tag "dedicated" dedicated)))
+  :type
+  '(radio
+    (const :tag "all" nil)
+    (const :tag "project" project)
+    (const :tag "frame" frame)
+    (const :tag "dedicated" dedicated)
+    (const :tag "perspective" perspective)))
 
 (defcustom vterm-toggle-project-root t
   "Create a new vterm buffter at project root directory or not.
@@ -86,23 +89,29 @@ If the prompt of recent vterm buffer is not available,
   :group 'vterm-toggle
   :type 'boolean)
 
-(defcustom vterm-toggle-reset-window-configration-after-exit 'kill-window-only
+(defcustom vterm-toggle-reset-window-configration-after-exit
+  'kill-window-only
   "Whether reset window configuration after vterm buffer is killed."
   :group 'vterm-toggle
-  :type '(choice
-          (const :tag "Do nothing" nil)
-          (const :tag "Reset window configration after exit" t)
-          (const :tag "Kill Window only" kill-window-only)))
+  :type
+  '(choice
+    (const :tag "Do nothing" nil)
+    (const :tag "Reset window configration after exit" t)
+    (const :tag "Kill Window only" kill-window-only)))
 
 (defcustom vterm-toggle-hide-method 'delete-window
   "How to hide the vterm buffer."
   :group 'vterm-toggle
-  :type '(choice
-          (const :tag "Toggle without closing the vterm window(focus other window)" nil)
-          (const :tag "Reset Window configration" reset-window-configration)
-          (const :tag "Bury All vterm buffer" bury-all-vterm-buffer)
-          (const :tag "Quit window" quit-window)
-          (const :tag "Delete window" delete-window)))
+  :type
+  '(choice
+    (const
+     :tag
+     "Toggle without closing the vterm window(focus other window)"
+     nil)
+    (const :tag "Reset Window configration" reset-window-configration)
+    (const :tag "Bury All vterm buffer" bury-all-vterm-buffer)
+    (const :tag "Quit window" quit-window)
+    (const :tag "Delete window" delete-window)))
 
 (defvar vterm-toggle--window-configration nil)
 (defvar vterm-toggle--vterm-dedicated-buffer nil)
@@ -112,41 +121,37 @@ If the prompt of recent vterm buffer is not available,
 (defvar-local vterm-toggle--cd-cmd nil)
 
 ;;;###autoload
-(defun vterm-toggle(&optional args)
+(defun vterm-toggle (&optional args)
   "Vterm toggle.
-Optional argument ARGS ."
+Optional argument ARGS."
   (interactive "P")
   (cond
    ((or (derived-mode-p 'vterm-mode)
-        (and (vterm-toggle--get-window)
-             vterm-toggle-hide-method))
+        (and (vterm-toggle--get-window) vterm-toggle-hide-method))
     (if (equal (prefix-numeric-value args) 1)
         (vterm-toggle-hide)
-      (vterm vterm-buffer-name)))
+      (vterm-toggle-show)))
    ((equal (prefix-numeric-value args) 1)
     (vterm-toggle-show))
    ((equal (prefix-numeric-value args) 4)
-    (let ((vterm-toggle-fullscreen-p
-           (not vterm-toggle-fullscreen-p)))
+    (let ((vterm-toggle-fullscreen-p (not vterm-toggle-fullscreen-p)))
       (vterm-toggle-show)))))
 
 ;;;###autoload
-(defun vterm-toggle-cd(&optional args)
+(defun vterm-toggle-cd (&optional args)
   "Vterm toggle and insert a cd command.
 Optional argument ARGS ."
   (interactive "P")
   (cond
    ((or (derived-mode-p 'vterm-mode)
-        (and (vterm-toggle--get-window)
-             vterm-toggle-hide-method))
+        (and (vterm-toggle--get-window) vterm-toggle-hide-method))
     (if (equal (prefix-numeric-value args) 1)
         (vterm-toggle-hide)
       (vterm-toggle-show t)))
    ((equal (prefix-numeric-value args) 1)
     (vterm-toggle-show t))
    ((equal (prefix-numeric-value args) 4)
-    (let ((vterm-toggle-fullscreen-p
-           (not vterm-toggle-fullscreen-p)))
+    (let ((vterm-toggle-fullscreen-p (not vterm-toggle-fullscreen-p)))
       (vterm-toggle-show t)))))
 
 (defun vterm-toggle-hide (&optional _args)
@@ -176,13 +181,15 @@ Optional argument ARGS ."
               (switch-to-buffer buf)
             (switch-to-buffer-other-window buf))))))))
 
-(defun vterm-toggle--get-window()
+(defun vterm-toggle--get-window ()
   "Get the vterm window which is visible (active or inactive)."
-  (cl-find-if #'(lambda(w)
-                  (provided-mode-derived-p
-                   (buffer-local-value 'major-mode (window-buffer w))
-                   'vterm-mode))
-              (window-list)))
+  (cl-find-if
+   #'(lambda (w)
+       (provided-mode-derived-p (buffer-local-value
+                                 'major-mode
+                                 (window-buffer w))
+                                'vterm-mode))
+   (window-list)))
 
 (defun vterm-toggle--bury-all-vterm ()
   "Bury all vterm buffer in order."
@@ -195,48 +202,56 @@ Optional argument ARGS ."
   "Return the METHOD parameter PARAM.
 If the `tramp-methods' entry does not exist, return NIL."
   (let ((entry (assoc param (assoc method tramp-methods))))
-    (when entry (cadr entry))))
+    (when entry
+      (cadr entry))))
 
 (when (version<= emacs-version "26.3")
   (with-eval-after-load 'tramp-sh
     (defun tramp-get-sh-extra-args (shell)
       "Find extra args for SHELL."
       (let ((alist tramp-sh-extra-args)
-            item extra-args)
+            item
+            extra-args)
         (while (and alist (null extra-args))
           (setq item (pop alist))
           (when (string-match-p (car item) shell)
             (setq extra-args (cdr item))))
         extra-args))))
 
-(defun vterm-toggle-cd-show(&optional  args)
+(defun vterm-toggle-cd-show (&optional args)
   "Switch to an idle vterm buffer and insert a cd command.
 Or create 1 new vterm buffer.
 Optional argument ARGS optional args."
   (interactive "P")
   (vterm-toggle-show (not args)))
 
-(defun vterm-toggle-show(&optional make-cd)
+(defun vterm-toggle-show (&optional make-cd)
   "Show the vterm buffer.
 Optional argument MAKE-CD whether insert a cd command."
   (interactive "P")
   (when (eq vterm-toggle-scope 'projectile)
-    (warn "The value of `vterm-toggle-scope' is 'projectile, please change it to 'project"))
-  (let* ((shell-buffer (vterm-toggle--get-buffer
-                        make-cd (not vterm-toggle-cd-auto-create-buffer)))
+    (warn
+     "The value of `vterm-toggle-scope' is 'projectile, please change it to 'project"))
+  (let* ((shell-buffer
+          (vterm-toggle--get-buffer
+           make-cd (not vterm-toggle-cd-auto-create-buffer)))
          (dir (expand-file-name default-directory))
-         cd-cmd cur-host vterm-dir vterm-host)
-    (if (ignore-errors (file-remote-p dir))
-        (with-parsed-tramp-file-name dir nil
-          (setq cur-host host)
-          (setq dir localname))
+         cd-cmd
+         cur-host
+         vterm-dir
+         vterm-host)
+    (if (ignore-errors
+          (file-remote-p dir))
+        (with-parsed-tramp-file-name
+         dir nil (setq cur-host host) (setq dir localname))
       (setq cur-host (system-name)))
     (setq cd-cmd (concat " cd " (shell-quote-argument dir)))
     (if shell-buffer
         (progn
           (when (and (not (derived-mode-p 'vterm-mode))
                      (not (get-buffer-window shell-buffer)))
-            (setq vterm-toggle--window-configration (current-window-configuration)))
+            (setq vterm-toggle--window-configration
+                  (current-window-configuration)))
           (if vterm-toggle-fullscreen-p
               (progn
                 (delete-other-windows)
@@ -247,24 +262,30 @@ Optional argument MAKE-CD whether insert a cd command."
           (with-current-buffer shell-buffer
             (when (derived-mode-p 'vterm-mode)
               (setq vterm-toggle--cd-cmd cd-cmd)
-              (if (ignore-errors (file-remote-p default-directory))
-                  (with-parsed-tramp-file-name default-directory nil
-                    (setq vterm-dir localname)
-                    (setq vterm-host host))
+              (if (ignore-errors
+                    (file-remote-p default-directory))
+                  (with-parsed-tramp-file-name
+                   default-directory
+                   nil
+                   (setq vterm-dir localname)
+                   (setq vterm-host host))
                 (setq vterm-dir default-directory)
                 (setq vterm-host (system-name)))
               (when (and (not (equal vterm-dir dir))
-                         (equal vterm-host cur-host) make-cd)
+                         (equal vterm-host cur-host)
+                         make-cd)
                 (vterm-send-key "a" nil nil :ctrl)
                 (vterm-send-key "k" nil nil :ctrl)
                 (sleep-for 0.01)
                 (if (vterm-toggle--in-cmd-buffer-p)
                     (vterm-toggle-insert-cd)
-                  (message "You can insert '%s' by M-x:vterm-toggle-insert-cd."
-                           vterm-toggle--cd-cmd))))
+                  (message
+                   "You can insert '%s' by M-x:vterm-toggle-insert-cd."
+                   vterm-toggle--cd-cmd))))
             (run-hooks 'vterm-toggle-show-hook)))
       (unless (eq major-mode 'vterm-mode)
-        (setq vterm-toggle--window-configration (current-window-configuration)))
+        (setq vterm-toggle--window-configration
+              (current-window-configuration)))
       (with-current-buffer (setq shell-buffer (vterm-toggle--new))
         (vterm-toggle--wait-prompt)
         (when vterm-toggle-fullscreen-p
@@ -272,18 +293,21 @@ Optional argument MAKE-CD whether insert a cd command."
         (run-hooks 'vterm-toggle-show-hook)))
     shell-buffer))
 
-(defun vterm-toggle--wait-prompt()
+(defun vterm-toggle--wait-prompt ()
   "Wait prompt."
   (let ((wait-ms 0))
-    (cl-loop until (or (> (length (string-trim
-                                   (buffer-substring-no-properties
-                                    (point-min) (point-max)))) 0)
-                       (> wait-ms 3000)) do
-                       (sleep-for 0.01)
-                       (setq wait-ms (+ wait-ms 10)))))
+    (cl-loop
+     until
+     (or (> (length
+             (string-trim
+              (buffer-substring-no-properties
+               (point-min) (point-max))))
+            0)
+         (> wait-ms 3000))
+     do (sleep-for 0.01) (setq wait-ms (+ wait-ms 10)))))
 
 ;;;###autoload
-(defun vterm-toggle-insert-cd()
+(defun vterm-toggle-insert-cd ()
   "Cd to the directory where your previous buffer file exists.
 after you have toggle to the vterm buffer with `vterm-toggle'."
   (interactive)
@@ -293,7 +317,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
         (vterm-send-return))
     (call-interactively #'vterm-toggle-cd-show)))
 
-(defun vterm-toggle--new(&optional buffer-name)
+(defun vterm-toggle--new (&optional buffer-name)
   "New vterm buffer with option name BUFFER-NAME."
   (let ((default-directory default-directory)
         (buffer-name (or buffer-name vterm-buffer-name))
@@ -311,7 +335,7 @@ after you have toggle to the vterm buffer with `vterm-toggle'."
         (vterm-other-window buffer-name)))))
 
 
-(defun vterm-toggle--get-buffer(&optional make-cd ignore-prompt-p)
+(defun vterm-toggle--get-buffer (&optional make-cd ignore-prompt-p)
   "Get vterm buffer.
 Optional argument MAKE-CD make cd or not.
 Unknown argument IGNORE-PROMPT-P"
@@ -320,13 +344,14 @@ Unknown argument IGNORE-PROMPT-P"
     (vterm-toggle--get-dedicated-buffer))
    ((eq vterm-toggle-scope 'project)
     (let* ((project-root (vterm-toggle--project-root))
-           (buf (vterm-toggle--recent-vterm-buffer
-                 make-cd ignore-prompt-p project-root)))
+           (buf
+            (vterm-toggle--recent-vterm-buffer
+             make-cd ignore-prompt-p project-root)))
       buf))
    (t
     (vterm-toggle--recent-vterm-buffer make-cd ignore-prompt-p))))
 
-(defun vterm-toggle--get-dedicated-buffer()
+(defun vterm-toggle--get-dedicated-buffer ()
   "Get dedicated buffer."
   (if (buffer-live-p vterm-toggle--vterm-dedicated-buffer)
       vterm-toggle--vterm-dedicated-buffer
@@ -337,14 +362,15 @@ Unknown argument IGNORE-PROMPT-P"
       vterm-toggle--vterm-dedicated-buffer)))
 
 
-(defun vterm-toggle--not-in-other-frame(frame buf)
+(defun vterm-toggle--not-in-other-frame (frame buf)
   "Checks if BUF in the given FRAME."
   (let ((win (get-buffer-window buf t)))
     (if win
         (eq frame (window-frame win))
       t)))
 
-(defun vterm-toggle--recent-vterm-buffer(&optional make-cd ignore-prompt-p dir)
+(defun vterm-toggle--recent-vterm-buffer
+    (&optional make-cd ignore-prompt-p dir)
   "Get recent vterm buffer.
 Optional argument MAKE-CD make cd or not.
 Unknown argument IGNORE-PROMPT-P
@@ -354,66 +380,73 @@ Unknown argument DIR"
         (curframe (window-frame))
         buffer-host
         vterm-host)
-    (if (ignore-errors (file-remote-p default-directory))
-        (with-parsed-tramp-file-name default-directory nil
-          (setq buffer-host host))
+    (if (ignore-errors
+          (file-remote-p default-directory))
+        (with-parsed-tramp-file-name
+         default-directory nil (setq buffer-host host))
       (setq buffer-host (system-name)))
-    (cl-loop for buf in (buffer-list) do
-             (with-current-buffer buf
-               (when (and (derived-mode-p 'vterm-mode)
-                          (not (eq curbuf buf))
-                          (not vterm-toggle--dedicated-p)
-                          (or (not vterm-toggle-scope)
-                              (and (eq vterm-toggle-scope 'frame)
-                                   (vterm-toggle--not-in-other-frame curframe buf))
-                              (and (eq vterm-toggle-scope 'project)
-                                   (equal (vterm-toggle--project-root) dir))))
-                 (cond
-                  ((and  make-cd (derived-mode-p 'vterm-mode))
-                   (if (ignore-errors (file-remote-p default-directory))
-                       (with-parsed-tramp-file-name default-directory nil
-                         (setq vterm-host host))
-                     (setq vterm-host (system-name)))
-                   (when (and (or ignore-prompt-p
-                                  (vterm-toggle--in-cmd-buffer-p))
-                              (equal buffer-host vterm-host))
-                     (setq shell-buffer buf)))
-                  (t (setq shell-buffer buf)))))
-             until shell-buffer)
+    (cl-loop
+     for buf in (buffer-list) do
+     (with-current-buffer buf
+       (when (and (derived-mode-p 'vterm-mode)
+                  (not (eq curbuf buf))
+                  (not vterm-toggle--dedicated-p)
+                  (or (not vterm-toggle-scope)
+                      (and (eq vterm-toggle-scope 'frame)
+                           (vterm-toggle--not-in-other-frame
+                            curframe buf))
+                      (and (eq vterm-toggle-scope 'project)
+                           (equal (vterm-toggle--project-root) dir))))
+         (cond
+          ((and make-cd (derived-mode-p 'vterm-mode))
+           (if (ignore-errors
+                 (file-remote-p default-directory))
+               (with-parsed-tramp-file-name
+                default-directory nil (setq vterm-host host))
+             (setq vterm-host (system-name)))
+           (when (and (or ignore-prompt-p
+                          (vterm-toggle--in-cmd-buffer-p))
+                      (equal buffer-host vterm-host))
+             (setq shell-buffer buf)))
+          (t
+           (setq shell-buffer buf)))))
+     until shell-buffer)
     shell-buffer))
 
-(defun vterm-toggle--in-cmd-buffer-p()
+(defun vterm-toggle--in-cmd-buffer-p ()
   "Returns t if cursor is in cmd buffer."
   (when (vterm-cursor-in-command-buffer-p)
     (or (eq (vterm--get-prompt-point) (vterm--get-cursor-point))
-        (and (vterm--backward-char)
-             (vterm--forward-char)))))
+        (and (vterm--backward-char) (vterm--forward-char)))))
 
-(defun vterm-toggle--project-root()
+(defun vterm-toggle--project-root ()
   "Returns path to the current project else nil."
   (require 'project)
   (let ((proj (project-current)))
     (when proj
       (project-root proj))))
 
-(defun vterm-toggle--recent-other-buffer(&optional _args)
+(defun vterm-toggle--recent-other-buffer (&optional _args)
   "Get last viewed buffer.
 Optional argument ARGS optional args."
   (let (shell-buffer)
-    (cl-loop for buf in (buffer-list) do
-             (with-current-buffer buf
-               (when (and (not (derived-mode-p 'vterm-mode))
-                          (not (char-equal ?\  (aref (buffer-name) 0))))
-                 (setq shell-buffer buf)))
-             until shell-buffer)
+    (cl-loop
+     for buf in (buffer-list) do
+     (with-current-buffer buf
+       (when (and (not (derived-mode-p 'vterm-mode))
+                  (not (char-equal ?\  (aref (buffer-name) 0))))
+         (setq shell-buffer buf)))
+     until shell-buffer)
     shell-buffer))
 
-(defun vterm-toggle--exit-hook()
+(defun vterm-toggle--exit-hook ()
   "Vterm exit hook."
   (when (derived-mode-p 'vterm-mode)
     (setq vterm-toggle--buffer-list
           (delq (current-buffer) vterm-toggle--buffer-list))
-    (if (eq vterm-toggle-reset-window-configration-after-exit 'kill-window-only)
+    (if (eq
+         vterm-toggle-reset-window-configration-after-exit
+         'kill-window-only)
         (cond
          ((eq (window-deletable-p) 'frame)
           (delete-frame))
@@ -423,12 +456,13 @@ Optional argument ARGS optional args."
           (quit-window)))
       (when (and vterm-toggle-reset-window-configration-after-exit
                  vterm-toggle--window-configration)
-        (set-window-configuration vterm-toggle--window-configration)))))
+        (set-window-configuration
+         vterm-toggle--window-configration)))))
 
 (add-hook 'kill-buffer-hook #'vterm-toggle--exit-hook)
 ;; (add-hook 'vterm-exit-functions #'vterm-toggle--exit-hook)
 
-(defun vterm-toggle--mode-hook()
+(defun vterm-toggle--mode-hook ()
   "Hook for `vterm-mode-hook'."
   (add-to-list 'vterm-toggle--buffer-list (current-buffer)))
 (add-hook 'vterm-mode-hook #'vterm-toggle--mode-hook)
@@ -444,12 +478,16 @@ If DIRECTION `backward', switch to the previous term.
 Option OFFSET for skip OFFSET number term buffer."
   (if vterm-toggle--buffer-list
       (let ((buffer-list-len (length vterm-toggle--buffer-list))
-            (index (cl-position (current-buffer) vterm-toggle--buffer-list)))
+            (index
+             (cl-position
+              (current-buffer) vterm-toggle--buffer-list)))
         (if index
-            (let ((target-index (if (eq direction 'forward)
-                                    (mod (+ index offset) buffer-list-len)
-                                  (mod (- index offset) buffer-list-len))))
-              (switch-to-buffer (nth target-index vterm-toggle--buffer-list)))
+            (let ((target-index
+                   (if (eq direction 'forward)
+                       (mod (+ index offset) buffer-list-len)
+                     (mod (- index offset) buffer-list-len))))
+              (switch-to-buffer
+               (nth target-index vterm-toggle--buffer-list)))
           (switch-to-buffer (car vterm-toggle--buffer-list))))
     (call-interactively 'vterm)))
 
@@ -467,9 +505,14 @@ If OFFSET is `non-nil', will goto next term buffer with OFFSET."
   (interactive "P")
   (vterm-toggle--switch 'backward (or offset 1)))
 
+(defun vterm-toggle--perspective-p ()
+  "Returns curent perspective name if exists else nil."
+  (require 'perspective nil 'no-error))
+
+
 (provide 'vterm-toggle)
 
-(require 'vterm nil t)                  ; https://github.com/jixiuf/vterm-toggle/issues/24
+(require 'vterm nil t) ; https://github.com/jixiuf/vterm-toggle/issues/24
 
 ;; Local Variables:
 ;; coding: utf-8
